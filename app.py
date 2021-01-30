@@ -3,7 +3,14 @@ from google.cloud import bigquery
 from google.oauth2 import service_account
 
 import pandas as pd
-import sys
 
-print(sys.version)
 
+
+
+## main ##
+def main():
+    st.sidebar.title("Menu")
+
+
+if __name__ == "__main__":
+    main()
