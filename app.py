@@ -17,7 +17,7 @@ def load_data():
     """
     )
 
-    df = pd.query_job.to_dataframe()
+    df = query_job.to_dataframe()
 
     return df
 
