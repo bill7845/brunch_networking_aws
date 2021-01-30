@@ -27,20 +27,8 @@ def load_data():
 def main():
     st.sidebar.title("Menu")
     app_mode = st.sidebar.selectbox("",["Home", "App 실행"])
-
-    if app_mode = "HOME":
-        st.title('< Brunch Networking >')
-        st.write('')
-        st.subheader('브런치 텍스트 자동분류 및 추천 시스템')
-        st.write('')
-
-    elif app_mode == "App 실행":
-        st.sidebar.success('앱 실행중입니다')
-        st.title("환영합니다 작가님!")
-        st.write("")
-        st.write("")
-
-        st.table(load_data())
+    
+    st.table(load_data())
 
 if __name__ == "__main__":
     main()
