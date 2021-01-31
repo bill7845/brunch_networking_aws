@@ -16,15 +16,11 @@ def load_data(y):
     project_id = 'brunch-networking-303012'
     client = bigquery.Client(credentials = credentials, project=project_id)
 
-    query_job = client.query(
-        """
-        SELECT title,text,keyword,url 
-        FROM `brunch-networking-303012.brunch_networking.brunch_all_text`
-        WHERE class = {class_num}
-        """.format(class_num=str(y))
-    )
+    query = """
+    SELECT title,text,keyword,url FROM `brunch-networking-303012.brunch_networking.brunch_all_text` WHERE class = '{class_num}' 
+    """.format(class_num=y)
 
-    print(query_job)
+    query_job = client.query(query=query)
     df = query_job.to_dataframe()
 
     return df
