@@ -16,6 +16,8 @@ def load_data(y):
     project_id = 'brunch-networking-303012'
     client = bigquery.Client(credentials = credentials, project=project_id)
 
+    print(y)
+
     query_job = client.query(
         """
         SELECT title,text,keyword,url 
