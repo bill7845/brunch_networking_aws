@@ -20,8 +20,8 @@ def load_data(y):
         """
         SELECT title,text,keyword,url 
         FROM `brunch-networking-303012.brunch_networking.brunch_all_text`
-        WHERE class = {class}
-        """.format(class=y)
+        WHERE class = {class_num}
+        """.format(class_num=y)
     )
 
     df = query_job.to_dataframe()
