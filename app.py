@@ -80,10 +80,10 @@ def find_sim_document(input_document, y, top_n=3): # 전체 데이터프레임, 
     top_n_sim = document_sim_sorted_ind[:1,:(top_n)] # 유사도가 높은순으로 top_n 만큼
     top_n_sim = top_n_sim.reshape(-1) # index
 
-    res_df = res_df.iloc[top_n_sim]
-    res_df['text'] = res_df['text'].apply(lambda x : x[:300]) # 지면상 300글자씩만
+    df = df.iloc[top_n_sim]
+    df['text'] = df['text'].apply(lambda x : x[:300]) # 지면상 300글자씩만
 
-    return res_df
+    return df
 
 
 
