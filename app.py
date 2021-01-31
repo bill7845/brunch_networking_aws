@@ -8,6 +8,7 @@ import re
 import pickle
 from konlpy.tag import Mecab
 import plotly as plt
+from sklearn.metrics.pairwise import cosine_similarity
 
 ## load csv
 @st.cache(allow_output_mutation=True)
