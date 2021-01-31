@@ -20,13 +20,13 @@ def load_data():
 ## laod tfidf vector
 @st.cache(allow_output_mutation=True)
 def load_tfidf_train_vect():
-    tfidf_train_vect = pickle.load(open("pkl_objects/tfidf_train_vect.pkl"), 'rb')
+    tfidf_train_vect = pickle.load(open("pkl_objects/tfidf_train_vect.pkl", 'rb'))
     return tfidf_train_vect
 
 ## load classifier
 @st.cache
 def load_clf():
-    clf = clf = pickle.load(open("model/classifier_lg.pkl"), 'rb')
+    clf = clf = pickle.load(open("model/classifier_lg.pkl", 'rb'))
     return clf
 
 # classifier
