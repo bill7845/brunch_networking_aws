@@ -100,6 +100,7 @@ def find_sim_keyword(df, count_vect, keyword_mat, input_keywords, top_n=3):
   top_n_sim = keyword_sim_sorted_ind[:1,:(top_n)]
   top_n_sim = top_n_sim.reshape(-1) # index
 
+  print("top_n_sim",type(top_n_sim))
   res_df = df.iloc[top_n_sim][['title','text','keyword','url']]
   res_df['text'] = res_df['text'].apply(lambda x : x[:300]) # 지면상 300글자씩만
 
@@ -163,67 +164,67 @@ def main():
         document = st.text_area("작성하신 글을 입력해주세요.") ## text 입력란
         submit_button = st.button("제출",key='document') # submit 버튼
 
-    #######################################################################
-    ## 1. 문서 입력 후 submit 버튼 클릭 시 분류 모델에 의해 분류라벨,확률값 출력
-    #######################################################################
-    if submit_button:
-        label,proba_max,y = classify(document,label_dict,tfidf_train_vect) ## classify 함수에 의해 라벨,확률값
-        st.write('작성하신 글은 %d퍼센트의 확률로 \'%s\' 카테고리로 분류됩니다.' %(round((proba_max)*100),label))
+        #######################################################################
+        ## 1. 문서 입력 후 submit 버튼 클릭 시 분류 모델에 의해 분류라벨,확률값 출력
+        #######################################################################
+        if submit_button:
+            label,proba_max,y = classify(document,label_dict,tfidf_train_vect) ## classify 함수에 의해 라벨,확률값
+            st.write('작성하신 글은 %d퍼센트의 확률로 \'%s\' 카테고리로 분류됩니다.' %(round((proba_max)*100),label))
 
-    #######################################################################
-    ## 2. 분류 결과에 대한 맞춤,틀림 여부 입력받음
-    ##      2.1 정답일 경우
-    ##      2.2 오답일 경우
-    #######################################################################
-    category_list = ['<select>','지구한바퀴_세계여행', '시사_이슈',
-        'IT_트렌드', '취향저격_영화리뷰', '뮤직_인사이드',
-        '육아_이야기', '요리_레시피', '건강_운동', '멘탈관리_심리탐구',
-        '문화_예술', '인문학_철학','쉽게_읽는_역사',
-        '우리집_반려동물' , '오늘은_이런책', '직장인_현실조언','스타트업_경험담',
-        '감성_에세이','사랑_이별']
-    st.write("")
-    status = st.radio("분류가 알맞게 되었는지 알려주세요!", ("<select>","맞춤", "틀림")) # <select> 기본값
+        #######################################################################
+        ## 2. 분류 결과에 대한 맞춤,틀림 여부 입력받음
+        ##      2.1 정답일 경우
+        ##      2.2 오답일 경우
+        #######################################################################
+        category_list = ['<select>','지구한바퀴_세계여행', '시사_이슈',
+            'IT_트렌드', '취향저격_영화리뷰', '뮤직_인사이드',
+            '육아_이야기', '요리_레시피', '건강_운동', '멘탈관리_심리탐구',
+            '문화_예술', '인문학_철학','쉽게_읽는_역사',
+            '우리집_반려동물' , '오늘은_이런책', '직장인_현실조언','스타트업_경험담',
+            '감성_에세이','사랑_이별']
+        st.write("")
+        status = st.radio("분류가 알맞게 되었는지 알려주세요!", ("<select>","맞춤", "틀림")) # <select> 기본값
 
-    if status == "맞춤" : # 정답일 경우
-            st.write("분류가 알맞게 되었군요! 추천시스템을 이용해보세요 작성하신 글을 기반으로 다른 작가분의 글을 추천해드려요")
-            # streamlit의 변수 공유기능 한계로, label,proba,max,y값을 다시 구함 * 향후 방법 찾을 시 수정
-            label,proba_max,y = classify(document,label_dict,tfidf_train_vect)
-            df = load_data(y)
-            recommended_text = find_sim_document(df,document,y,top_n=3)
-
-            st.write("")
-            st.write("<작성글 기반 추천글 목록>")
-            st.table(recommended_text)
-
-            ## 추천 시스템 부분 시작
-            st.write('---')
-            st.write("## 추천 시스템")
-            st.write("선택하신 키워드를 기반으로 다른 작가분의 글을 추천해드려요.")
-            select_category = st.multiselect("keyword를 선택하세요.",get_categories(label))
-            st.write(len(select_category), "가지 keyword를 선택했습니다.")
-
-            keyword_submit_button = st.button("keyword 선택 완료",key='select_category') # submit 버튼
-
-            if keyword_submit_button: ## keyword 선택 완료 시
-                # 기존 게시글들의 keyword vector와 keyword matrix 로드
-                keyword_count_vect = load_keyword_count_vect()
-                keyword_mat = load_keyword_mat()
+        if status == "맞춤" : # 정답일 경우
+                st.write("분류가 알맞게 되었군요! 추천시스템을 이용해보세요 작성하신 글을 기반으로 다른 작가분의 글을 추천해드려요")
+                # streamlit의 변수 공유기능 한계로, label,proba,max,y값을 다시 구함 * 향후 방법 찾을 시 수정
+                label,proba_max,y = classify(document,label_dict,tfidf_train_vect)
+                df = load_data(y)
+                recommended_text = find_sim_document(df,document,y,top_n=3)
 
                 st.write("")
-                st.write("")
-                st.write("키워드 트렌드")
-                line_chart_df = keyword_trend_chart(df,select_category)
-                st.line_chart(line_chart_df)
+                st.write("<작성글 기반 추천글 목록>")
+                st.table(recommended_text)
 
-                select_category_joined = (' ').join(select_category)
-                recommended_keyword = find_sim_keyword(df, keyword_count_vect, keyword_mat, select_category_joined, top_n=5)
+                ## 추천 시스템 부분 시작
+                st.write('---')
+                st.write("## 추천 시스템")
+                st.write("선택하신 키워드를 기반으로 다른 작가분의 글을 추천해드려요.")
+                select_category = st.multiselect("keyword를 선택하세요.",get_categories(label))
+                st.write(len(select_category), "가지 keyword를 선택했습니다.")
 
-                st.write("")
-                st.write("<추천글 목록>")
-                st.table(recommended_keyword)
+                keyword_submit_button = st.button("keyword 선택 완료",key='select_category') # submit 버튼
 
-                # answer = 1 # 맞춤/틀림 여부
-                # sqlite_main(document, answer, label, None, select_category_joined) ## 결과 db 저장
+                if keyword_submit_button: ## keyword 선택 완료 시
+                    # 기존 게시글들의 keyword vector와 keyword matrix 로드
+                    keyword_count_vect = load_keyword_count_vect()
+                    keyword_mat = load_keyword_mat()
+
+                    st.write("")
+                    st.write("")
+                    st.write("키워드 트렌드")
+                    line_chart_df = keyword_trend_chart(df,select_category)
+                    st.line_chart(line_chart_df)
+
+                    select_category_joined = (' ').join(select_category)
+                    recommended_keyword = find_sim_keyword(df, keyword_count_vect, keyword_mat, select_category_joined, top_n=5)
+
+                    st.write("")
+                    st.write("<추천글 목록>")
+                    st.table(recommended_keyword)
+
+                    # answer = 1 # 맞춤/틀림 여부
+                    # sqlite_main(document, answer, label, None, select_category_joined) ## 결과 db 저장
 
 if __name__ == "__main__":
     main()
