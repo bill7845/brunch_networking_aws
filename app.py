@@ -18,7 +18,7 @@ def load_data(y):
     client = bigquery.Client(credentials = credentials, project=project_id)
 
     query = """
-    SELECT title,text,keyword,url FROM `brunch-networking-303012.brunch_networking.brunch_all_text` WHERE class = '{class_num}' 
+    SELECT title,publish_date,text,keyword,url FROM `brunch-networking-303012.brunch_networking.brunch_all_text` WHERE class = '{class_num}' 
     """.format(class_num=y)
 
     query_job = client.query(query=query)
@@ -35,7 +35,7 @@ def load_tfidf_train_vect():
 ## load classifier
 @st.cache
 def load_clf():
-    clf = clf = pickle.load(open("model/classifier_lg.pkl", 'rb'))
+    clf = pickle.load(open("model/classifier_lg.pkl", 'rb'))
     return clf
 
 # classifier
@@ -57,9 +57,13 @@ def classify(document, label_dict, tfidf_train_vect):
 
     return label_dict[y],proba_max,y
 
+## category에 해당하는 keyword 목록 반환
+def get_categories(label):
+    category_dict = pickle.load(open("pkl_objects/keyword/keyword_dict.txt", 'rb'))
+    return tuple(category_dict[label]) # streamlit의 multiselect box에서 사용위해 tuple로 반환
+
 ## 추천 시스템_1 작성 글 기반
-def find_sim_document(input_document, y, top_n=3): # 전체 데이터프레임, 입력문서, 입력문서의 예측라벨, 추천글 수
-    df = load_data(y)
+def find_sim_document(df,input_document, y, top_n=3): # 전체 데이터프레임, 입력문서, 입력문서의 예측라벨, 추천글 수
     # 형태소 분석기(mecab)
     mecab = Mecab()
 
@@ -84,6 +88,49 @@ def find_sim_document(input_document, y, top_n=3): # 전체 데이터프레임, 
     df['text'] = df['text'].apply(lambda x : x[:300]) # 지면상 300글자씩만
 
     return df
+
+## 추천 시스템_2 Keyword 기반
+def find_sim_keyword(df, count_vect, keyword_mat, input_keywords, top_n=3):
+
+  input_keywords_mat = count_vect.transform(pd.Series(input_keywords)) # 입력 받은 키워드를 count_vectorizer
+  keyword_sim = cosine_similarity(input_keywords_mat, keyword_mat) # 입력 키워드와 기존 키워드간 cosine_similarity
+
+  keyword_sim_sorted_ind = keyword_sim.argsort()[:,::-1] # 유사도가 높은순으로 정렬
+
+  top_n_sim = keyword_sim_sorted_ind[:1,:(top_n)]
+  top_n_sim = top_n_sim.reshape(-1) # index
+
+  res_df = df.iloc[top_n_sim][['title','text','keyword','url']]
+  res_df['text'] = res_df['text'].apply(lambda x : x[:300]) # 지면상 300글자씩만
+
+  return res_df
+
+## keyword trend 차트
+## 2020/01/01부터 입력된 키워드들의 주별 등장횟수를 구하여 반환함
+def keyword_trend_chart(df, select_keyword):
+    df.index = pd.to_datetime(df['publish_date'],format='%Y-%m-%d') # 게시글별 발행일을 index로
+    df = df['keyword']['2020-01-01':].resample('M').sum()
+
+    res_df = pd.DataFrame(columns=select_keyword,index=df.index)
+    for keyword in select_keyword:
+        keyword_week_count = []
+        for week in range(len(df)):
+            keyword_week_count.append(df.iloc[week].count(keyword))
+        res_df[keyword] = keyword_week_count
+
+    return res_df
+
+## load keyword count_vector
+@st.cache(allow_output_mutation=True)
+def load_keyword_count_vect():
+    keyword_count_vect = pickle.load(open("pkl_objects/keyword/keyword_count_vect.pkl", 'rb'))
+    return keyword_count_vect
+
+## load keyword matrix
+@st.cache(allow_output_mutation=True)
+def load_keyword_mat():
+    keyword_mat = pickle.load(open("pkl_objects/keyword/keyword_mat.pkl", 'rb'))
+    return keyword_mat
 
 
 
@@ -141,41 +188,42 @@ def main():
             st.write("분류가 알맞게 되었군요! 추천시스템을 이용해보세요 작성하신 글을 기반으로 다른 작가분의 글을 추천해드려요")
             # streamlit의 변수 공유기능 한계로, label,proba,max,y값을 다시 구함 * 향후 방법 찾을 시 수정
             label,proba_max,y = classify(document,label_dict,tfidf_train_vect)
-            recommended_text = find_sim_document(document,y,top_n=3)
+            df = load_data(y)
+            recommended_text = find_sim_document(df,document,y,top_n=3)
 
             st.write("")
             st.write("<작성글 기반 추천글 목록>")
             st.table(recommended_text)
 
-            # ## 추천 시스템 부분 시작
-            # st.write('---')
-            # st.write("## 추천 시스템")
-            # st.write("선택하신 키워드를 기반으로 다른 작가분의 글을 추천해드려요.")
-            # select_category = st.multiselect("keyword를 선택하세요.",get_categories(label))
-            # st.write(len(select_category), "가지 keyword를 선택했습니다.")
+            ## 추천 시스템 부분 시작
+            st.write('---')
+            st.write("## 추천 시스템")
+            st.write("선택하신 키워드를 기반으로 다른 작가분의 글을 추천해드려요.")
+            select_category = st.multiselect("keyword를 선택하세요.",get_categories(label))
+            st.write(len(select_category), "가지 keyword를 선택했습니다.")
 
-            # keyword_submit_button = st.button("keyword 선택 완료",key='select_category') # submit 버튼
+            keyword_submit_button = st.button("keyword 선택 완료",key='select_category') # submit 버튼
 
-            # if keyword_submit_button: ## keyword 선택 완료 시
-            #     # 기존 게시글들의 keyword vector와 keyword matrix 로드
-            #     keyword_count_vect = load_keyword_count_vect()
-            #     keyword_mat = load_keyword_mat()
+            if keyword_submit_button: ## keyword 선택 완료 시
+                # 기존 게시글들의 keyword vector와 keyword matrix 로드
+                keyword_count_vect = load_keyword_count_vect()
+                keyword_mat = load_keyword_mat()
 
-            #     st.write("")
-            #     st.write("")
-            #     st.write("키워드 트렌드")
-            #     line_chart_df = keyword_trend_chart(df,select_category)
-            #     st.line_chart(line_chart_df)
+                st.write("")
+                st.write("")
+                st.write("키워드 트렌드")
+                line_chart_df = keyword_trend_chart(df,select_category)
+                st.line_chart(line_chart_df)
 
-            #     select_category_joined = (' ').join(select_category)
-            #     recommended_keyword = find_sim_keyword(df, keyword_count_vect, keyword_mat, select_category_joined, top_n=5)
+                select_category_joined = (' ').join(select_category)
+                recommended_keyword = find_sim_keyword(df, keyword_count_vect, keyword_mat, select_category_joined, top_n=5)
 
-            #     st.write("")
-            #     st.write("<추천글 목록>")
-            #     st.table(recommended_keyword)
+                st.write("")
+                st.write("<추천글 목록>")
+                st.table(recommended_keyword)
 
-            #     answer = 1 # 맞춤/틀림 여부
-            #     sqlite_main(document, answer, label, None, select_category_joined) ## 결과 db 저장
+                # answer = 1 # 맞춤/틀림 여부
+                # sqlite_main(document, answer, label, None, select_category_joined) ## 결과 db 저장
 
 if __name__ == "__main__":
     main()
