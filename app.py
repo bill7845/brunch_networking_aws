@@ -147,7 +147,59 @@ def load_keyword_mat():
     keyword_mat = pickle.load(open("pkl_objects/keyword/keyword_mat.pkl", 'rb'))
     return keyword_mat
 
+## rds(mysql) query
+## 입력문서, 정답여부, 예측라벨값, 수정라벨(오답일 경우), 입력 키워드 DB에 insert
+def mysql_main(document, answer, pred_label, correction_label, keyword_select):
 
+    data = (document, answer, pred_label, correction_label, keyword_select)
+    
+    conn = pymysql.connect(
+        user='admin', 
+        passwd='qwp5197705', 
+        host='db-brunch-networking.cko2dlqq4ux8.ap-northeast-2.rds.amazonaws.com', 
+        db='brunch_networking', 
+        charset='utf8'
+    )
+
+    c = conn.cursor(pymysql.cursors.DictCursor)
+    ## check table exist
+
+    check = "select 1 from information_schema.tables where table_name='log_basic' and table_schema='brunch_networking';"
+    c.execute(check)
+    check_res = c.fetchall()
+
+    if len(check_res) == 1:
+        print('aaa')
+        query = """
+            INSERT INTO log_basic(text_input, answer, pred_label, correction_label, keyword_select, date)
+            VALUES (%s, %s, %s, %s, %s, now())
+        """
+        c.execute(query,data)
+        conn.commit()
+        conn.close()
+
+    else :
+        query = """
+            CREATE TABLE log_basic(
+                text_input varchar(255),
+                answer int,
+                pred_label varchar(50),
+                correction_label int,
+                keyword_select varchar(255),
+                date datetime
+        );
+        """
+        c.execute(query)
+        conn.commit()
+        query = """
+            INSERT INTO log_basic(text_input, answer, pred_label, correction_label, keyword_select, date)
+            VALUES (%s, %s, %s, %s, %s, now());
+        """
+        c.execute(query,data)
+        conn.commit()
+        conn.close()
+
+    
 
 ## main ##
 def main():
@@ -238,8 +290,8 @@ def main():
                     st.write("<추천글 목록>")
                     st.table(recommended_keyword)
 
-                    # answer = 1 # 맞춤/틀림 여부
-                    # sqlite_main(document, answer, label, None, select_category_joined) ## 결과 db 저장
+                    answer = 1 # 맞춤/틀림 여부
+                    mysql_main(document ,answer, label, None, select_category_joined) ## 결과 db 저장
 
 if __name__ == "__main__":
     main()
