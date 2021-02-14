@@ -4,6 +4,7 @@ from google.oauth2 import service_account
 
 import pandas as pd
 import numpy as np
+import pymysql
 import re
 import pickle
 from konlpy.tag import Mecab
@@ -18,11 +19,28 @@ def load_data(y):
     client = bigquery.Client(credentials = credentials, project=project_id)
 
     query = """
-    SELECT title,publish_date,text,keyword,url FROM `brunch-networking-303012.brunch_networking.brunch_all_text` WHERE class = '{class_num}' 
+    SELECT title,publish_date,text,keyword,url FROM `brunch-networking-303012.brunch_networking.brunch_all_text` WHERE class = {class_num} 
     """.format(class_num=y)
 
     query_job = client.query(query=query)
     df = query_job.to_dataframe()
+
+    return df
+
+def laod_data_keyword_sim(top_n_sim):
+    credentials = service_account.Credentials.from_service_account_file(".credential/brunch-networking-07958d4e3d41.json")
+    project_id = 'brunch-networking-303012'
+    client = bigquery.Client(credentials = credentials, project=project_id)
+    
+    top_n_index = tuple(top_n_sim)
+    query = """
+    SELECT title,publish_date,text,keyword,url FROM `brunch-networking-303012.brunch_networking.brunch_all_text` where pk in {top_n_index}
+    """.format(top_n_index=top_n_index)
+
+    query_job = client.query(query=query)
+    df = query_job.to_dataframe()
+
+    df['text'] = df['text'].apply(lambda x : x[:300])
 
     return df
 
@@ -85,12 +103,12 @@ def find_sim_document(df,input_document, y, top_n=3): # 전체 데이터프레�
     top_n_sim = top_n_sim.reshape(-1) # index
 
     df = df.iloc[top_n_sim]
-    df['text'] = df['text'].apply(lambda x : x[:300]) # 지면상 300글자씩만
+    df.loc[:,'text'] = df['text'].apply(lambda x : x[:300]) # 지면상 300글자씩만
 
     return df
 
 ## 추천 시스템_2 Keyword 기반
-def find_sim_keyword(df, count_vect, keyword_mat, input_keywords, top_n=3):
+def find_sim_keyword(count_vect, keyword_mat, input_keywords, top_n):
 
   input_keywords_mat = count_vect.transform(pd.Series(input_keywords)) # 입력 받은 키워드를 count_vectorizer
   keyword_sim = cosine_similarity(input_keywords_mat, keyword_mat) # 입력 키워드와 기존 키워드간 cosine_similarity
@@ -98,13 +116,9 @@ def find_sim_keyword(df, count_vect, keyword_mat, input_keywords, top_n=3):
   keyword_sim_sorted_ind = keyword_sim.argsort()[:,::-1] # 유사도가 높은순으로 정렬
 
   top_n_sim = keyword_sim_sorted_ind[:1,:(top_n)]
-  top_n_sim = top_n_sim.reshape(-1) # index
-
-  print("top_n_sim",type(top_n_sim))
-  res_df = df.iloc[top_n_sim][['title','text','keyword','url']]
-  res_df['text'] = res_df['text'].apply(lambda x : x[:300]) # 지면상 300글자씩만
-
-  return res_df
+  top_n_sim = top_n_sim.reshape(-1) # 키워드간 유사도가 가장 높은 top_n 게시글의 index 반환
+  
+  return top_n_sim
 
 ## keyword trend 차트
 ## 2020/01/01부터 입력된 키워드들의 주별 등장횟수를 구하여 반환함
@@ -215,10 +229,11 @@ def main():
                     st.write("키워드 트렌드")
                     line_chart_df = keyword_trend_chart(df,select_category)
                     st.line_chart(line_chart_df)
-
                     select_category_joined = (' ').join(select_category)
-                    recommended_keyword = find_sim_keyword(df, keyword_count_vect, keyword_mat, select_category_joined, top_n=5)
-
+                
+                    recommended_keyword_index = find_sim_keyword(keyword_count_vect, keyword_mat, select_category_joined, top_n=3)
+                    recommended_keyword = laod_data_keyword_sim(recommended_keyword_index)
+                    
                     st.write("")
                     st.write("<추천글 목록>")
                     st.table(recommended_keyword)
