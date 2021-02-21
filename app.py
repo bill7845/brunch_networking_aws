@@ -101,6 +101,7 @@ def find_sim_document(df,input_document, y, top_n=3): # 전체 데이터프레�
 
     top_n_sim = document_sim_sorted_ind[:1,:(top_n)] # 유사도가 높은순으로 top_n 만큼
     top_n_sim = top_n_sim.reshape(-1) # index
+    print("top_n_sim",top_n_sim)
 
     df = df.iloc[top_n_sim]
     df.loc[:,'text'] = df['text'].apply(lambda x : x[:300]) # 지면상 300글자씩만
@@ -169,7 +170,6 @@ def mysql_main(document, answer, pred_label, correction_label, keyword_select):
     check_res = c.fetchall()
 
     if len(check_res) == 1:
-        print('aaa')
         query = """
             INSERT INTO log_basic(text_input, answer, pred_label, correction_label, keyword_select, date)
             VALUES (%s, %s, %s, %s, %s, now())
@@ -200,7 +200,6 @@ def mysql_main(document, answer, pred_label, correction_label, keyword_select):
         conn.close()
 
     
-
 ## main ##
 def main():
     st.sidebar.title("Menu")
@@ -292,6 +291,51 @@ def main():
 
                     answer = 1 # 맞춤/틀림 여부
                     mysql_main(document ,answer, label, None, select_category_joined) ## 결과 db 저장
+
+        elif status == "틀림":
+            st.write("분류가 잘못되었군요. 피드백을 주신다면 다음부턴 틀리지 않을거예요.")
+            label,proba_max,y = classify(document,label_dict,tfidf_train_vect)
+            category_correction = st.selectbox("category 수정하기", category_list) # 오답일 경우 정답을 새로 입력받음
+            if category_correction != "<select>": # 오답 수정 부분이 입력 받았을 경우 (default가 아닐경우 => 값을 입력받은 경우)
+                st.write("피드백을 주셔서 감사합니다. 이런 글은 어떠세요?")
+                tmp_y = [key for key,val in label_dict.items() if val == category_correction][0]
+                df = load_data(tmp_y)
+                recommended_text = find_sim_document(df,document,tmp_y,top_n=3)
+
+                st.write("")
+                st.write("<작성글 기반 추천글 목록>")
+                st.table(recommended_text)
+
+                st.write('---')
+                st.write("## 추천 시스템")
+                st.write("선택하신 키워드를 기반으로 다른 작가분의 글을 추천해드려요.")
+                select_category = st.multiselect("keyword를 선택하세요.",get_categories(category_correction))
+                st.write(len(select_category), "가지 keyword를 선택했습니다.")
+
+                keyword_submit_button = st.button("keyword 선택 완료",key='select_category') # submit 버튼
+
+                if keyword_submit_button: ## keyword 선택 완료 시
+                    keyword_count_vect = load_keyword_count_vect()
+                    keyword_mat = load_keyword_mat()
+
+                    st.write("")
+                    st.write("")
+                    st.write("키워드 트렌드")
+                    line_chart_df = keyword_trend_chart(df,select_category)
+                    st.line_chart(line_chart_df)
+
+                    select_category_joined = (' ').join(select_category)
+
+                    recommended_keyword_index = find_sim_keyword(keyword_count_vect, keyword_mat, select_category_joined, top_n=3)
+                    recommended_keyword = laod_data_keyword_sim(recommended_keyword_index)
+
+                    st.write("")
+                    st.write("<추천글 목록>")
+                    st.table(recommended_keyword)
+
+                    answer = 0 # 맞춤/틀림 여부
+                    mysql_main(document ,answer, label, category_correction, select_category_joined) ## 결과 db 저장
+
 
 if __name__ == "__main__":
     main()
