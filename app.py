@@ -19,7 +19,7 @@ def load_data(y):
     client = bigquery.Client(credentials = credentials, project=project_id)
 
     query = """
-    SELECT title,publish_date,text,keyword,url FROM `brunch-networking-303012.brunch_networking.brunch_all_text` WHERE class = {class_num} 
+    SELECT title,publish_date,text,keyword,url FROM `brunch-networking-303012.brunch_networking.ori_brunch_data` WHERE class_num = {class_num} 
     """.format(class_num=y)
 
     query_job = client.query(query=query)
@@ -34,7 +34,7 @@ def laod_data_keyword_sim(top_n_sim):
     
     top_n_index = tuple(top_n_sim)
     query = """
-    SELECT title,publish_date,text,keyword,url FROM `brunch-networking-303012.brunch_networking.brunch_all_text` where pk in {top_n_index}
+    SELECT title,publish_date,text,keyword,url FROM `brunch-networking-303012.brunch_networking.ori_brunch_data` where pk in {top_n_index}
     """.format(top_n_index=top_n_index)
 
     query_job = client.query(query=query)
@@ -155,9 +155,9 @@ def mysql_main(document, answer, pred_label, correction_label, keyword_select):
     data = (document, answer, pred_label, correction_label, keyword_select)
     
     conn = pymysql.connect(
-        user='admin', 
+        user='brunch_networking', 
         passwd='qwp5197705', 
-        host='db-brunch-networking.cko2dlqq4ux8.ap-northeast-2.rds.amazonaws.com', 
+        host='localhost', 
         db='brunch_networking', 
         charset='utf8'
     )
@@ -181,11 +181,11 @@ def mysql_main(document, answer, pred_label, correction_label, keyword_select):
     else :
         query = """
             CREATE TABLE log_basic(
-                text_input varchar(255),
+                text_input MEDIUMTEXT,
                 answer int,
                 pred_label varchar(50),
                 correction_label int,
-                keyword_select varchar(255),
+                keyword_select varchar(50),
                 date datetime
         );
         """
@@ -334,7 +334,7 @@ def main():
                     st.table(recommended_keyword)
 
                     answer = 0 # 맞춤/틀림 여부
-                    mysql_main(document ,answer, label, category_correction, select_category_joined) ## 결과 db 저장
+                    mysql_main(document ,answer, label, tmp_y, select_category_joined) ## 결과 db 저장
 
 
 if __name__ == "__main__":
