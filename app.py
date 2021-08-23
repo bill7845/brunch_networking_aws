@@ -1,6 +1,7 @@
 import streamlit as st
 from google.cloud import bigquery
 from google.oauth2 import service_account
+import boto3
 
 import pandas as pd
 import numpy as np
@@ -27,6 +28,17 @@ def load_data(y):
 
     return df
 
+def get_s3(key):
+
+    s3 = boto3.client('s3')
+    bucket = 'util-brunch-networking'
+
+    obj = s3.get_object(Bucket=bucket, Key=key)
+    body = obj['Body'].read()
+    data = pickle.loads(body)
+
+    return data
+
 def laod_data_keyword_sim(top_n_sim):
     credentials = service_account.Credentials.from_service_account_file(".credential/brunch-networking-07958d4e3d41.json")
     project_id = 'brunch-networking-303012'
@@ -47,13 +59,13 @@ def laod_data_keyword_sim(top_n_sim):
 ## laod tfidf vector
 @st.cache(allow_output_mutation=True)
 def load_tfidf_train_vect():
-    tfidf_train_vect = pickle.load(open("pkl_objects/tfidf_train_vect.pkl", 'rb'))
+    tfidf_train_vect = get_s3(key='train/tfidf_train_vect.pkl')
     return tfidf_train_vect
 
 ## load classifier
 @st.cache
 def load_clf():
-    clf = pickle.load(open("model/classifier_lg.pkl", 'rb'))
+    clf = get_s3(key="model_weight/classifier_lg.pkl")
     return clf
 
 # classifier
@@ -86,8 +98,10 @@ def find_sim_document(df,input_document, y, top_n=3): # 전체 데이터프레�
     mecab = Mecab()
 
     # 예측 or 수정된 문서 라벨 별 vector,matrix 로드
-    each_tfidf_vect = pickle.load(open('pkl_objects/each_vect/' + str(y) + 'tfidf_vect.pkl', 'rb'))
-    each_tfidf_matrix = pickle.load(open('pkl_objects/each_matrix/' + str(y) + 'tfidf_matrix.pkl', 'rb'))
+    # each_tfidf_vect = pickle.load(open('pkl_objects/each_vect/' + str(y) + 'tfidf_vect.pkl', 'rb'))
+    each_tfidf_vect = get_s3(key='each_vect/' + str(y) + "tfidf_vect.pkl")
+    # each_tfidf_matrix = pickle.load(open('pkl_objects/each_matrix/' + str(y) + 'tfidf_matrix.pkl', 'rb'))
+    each_tfidf_matrix = get_s3(key='each_matrix/' + str(y) + "tfidf_matrix.pkl")
 
     # 입력받은 문서를 길이 2이상의 명사로만 추출하여 재구성
     input_document = [i[0] for i in mecab.pos(input_document) if ( ((i[1]=="NNG") or (i[1]=="NNP") and (len(i[0])>1)) )]
@@ -139,13 +153,15 @@ def keyword_trend_chart(df, select_keyword):
 ## load keyword count_vector
 @st.cache(allow_output_mutation=True)
 def load_keyword_count_vect():
-    keyword_count_vect = pickle.load(open("pkl_objects/keyword/keyword_count_vect.pkl", 'rb'))
+    # keyword_count_vect = pickle.load(open("pkl_objects/keyword/keyword_count_vect.pkl", 'rb'))
+    keyword_count_vect = get_s3(key='keyword_vect/keyword_count_vect.pkl')
     return keyword_count_vect
 
 ## load keyword matrix
 @st.cache(allow_output_mutation=True)
 def load_keyword_mat():
-    keyword_mat = pickle.load(open("pkl_objects/keyword/keyword_mat.pkl", 'rb'))
+    # keyword_mat = pickle.load(open("pkl_objects/keyword/keyword_mat.pkl", 'rb'))
+    keyword_mat = get_s3(key='keyword_matrix/keyword_mat.pkl')
     return keyword_mat
 
 ## rds(mysql) query
