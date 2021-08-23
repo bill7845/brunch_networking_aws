@@ -52,7 +52,7 @@ def laod_data_keyword_sim(top_n_sim):
     query_job = client.query(query=query)
     df = query_job.to_dataframe()
 
-    df['text'] = df['text'].apply(lambda x : x[:300])
+    df['text'] = df['text'].apply(lambda x : x[:600])
 
     return df
 
@@ -89,7 +89,9 @@ def classify(document, label_dict, tfidf_train_vect):
 
 ## category에 해당하는 keyword 목록 반환
 def get_categories(label):
-    category_dict = pickle.load(open("pkl_objects/keyword/keyword_dict.txt", 'rb'))
+    # category_dict = pickle.load(open("pkl_objects/keyword/keyword_dict.txt", 'rb'))
+    with open('pkl_objects/keyword/keyword_dict.pkl', 'rb') as fr:
+        category_dict = pickle.load(fr)
     return tuple(category_dict[label]) # streamlit의 multiselect box에서 사용위해 tuple로 반환
 
 ## 추천 시스템_1 작성 글 기반
@@ -98,9 +100,7 @@ def find_sim_document(df,input_document, y, top_n=3): # 전체 데이터프레�
     mecab = Mecab()
 
     # 예측 or 수정된 문서 라벨 별 vector,matrix 로드
-    # each_tfidf_vect = pickle.load(open('pkl_objects/each_vect/' + str(y) + 'tfidf_vect.pkl', 'rb'))
     each_tfidf_vect = get_s3(key='each_vect/' + str(y) + "tfidf_vect.pkl")
-    # each_tfidf_matrix = pickle.load(open('pkl_objects/each_matrix/' + str(y) + 'tfidf_matrix.pkl', 'rb'))
     each_tfidf_matrix = get_s3(key='each_matrix/' + str(y) + "tfidf_matrix.pkl")
 
     # 입력받은 문서를 길이 2이상의 명사로만 추출하여 재구성
@@ -118,7 +118,7 @@ def find_sim_document(df,input_document, y, top_n=3): # 전체 데이터프레�
     print("top_n_sim",top_n_sim)
 
     df = df.iloc[top_n_sim]
-    df.loc[:,'text'] = df['text'].apply(lambda x : x[:300]) # 지면상 300글자씩만
+    df.loc[:,'text'] = df['text'].apply(lambda x : x[:600]) # 지면상 300글자씩만
 
     return df
 
@@ -153,14 +153,12 @@ def keyword_trend_chart(df, select_keyword):
 ## load keyword count_vector
 @st.cache(allow_output_mutation=True)
 def load_keyword_count_vect():
-    # keyword_count_vect = pickle.load(open("pkl_objects/keyword/keyword_count_vect.pkl", 'rb'))
     keyword_count_vect = get_s3(key='keyword_vect/keyword_count_vect.pkl')
     return keyword_count_vect
 
 ## load keyword matrix
 @st.cache(allow_output_mutation=True)
 def load_keyword_mat():
-    # keyword_mat = pickle.load(open("pkl_objects/keyword/keyword_mat.pkl", 'rb'))
     keyword_mat = get_s3(key='keyword_matrix/keyword_mat.pkl')
     return keyword_mat
 
@@ -274,8 +272,17 @@ def main():
                 recommended_text = find_sim_document(df,document,y,top_n=3)
 
                 st.write("")
-                st.write("<작성글 기반 추천글 목록>")
-                st.table(recommended_text)
+                st.subheader("<작성글 기반 추천글 목록>")
+                st.write("")
+
+                st.write("Recommended Text 1.")
+                st.write(recommended_text['text'].iloc[0] + str(" ... ..."))
+
+                st.write("Recommended Text 2.")
+                st.write(recommended_text['text'].iloc[1] + str(" ... ..."))
+
+                st.write("Recommended Text 3.")
+                st.write(recommended_text['text'].iloc[2] + str(" ... ..."))
 
                 ## 추천 시스템 부분 시작
                 st.write('---')
@@ -302,8 +309,17 @@ def main():
                     recommended_keyword = laod_data_keyword_sim(recommended_keyword_index)
                     
                     st.write("")
-                    st.write("<추천글 목록>")
-                    st.table(recommended_keyword)
+                    st.subheader("<Keyword 기반 추천글 목록>")
+                    st.write("")
+
+                    st.write("Recommended by Keyword 1.")
+                    st.write(recommended_keyword['text'].iloc[0] + str(" ... ..."))
+
+                    st.write("Recommended by Keyword 2.")
+                    st.write(recommended_keyword['text'].iloc[1] + str(" ... ..."))
+
+                    st.write("Recommended by Keyword 3.")
+                    st.write(recommended_keyword['text'].iloc[2] + str(" ... ..."))
 
                     answer = 1 # 맞춤/틀림 여부
                     mysql_main(document ,answer, label, None, select_category_joined) ## 결과 db 저장
@@ -319,8 +335,17 @@ def main():
                 recommended_text = find_sim_document(df,document,tmp_y,top_n=3)
 
                 st.write("")
-                st.write("<작성글 기반 추천글 목록>")
-                st.table(recommended_text)
+                st.subheader("<작성글 기반 추천글 목록>")
+                st.write("")
+
+                st.write("Recommended Text 1.")
+                st.write(recommended_text['text'].iloc[0] + str(" ... ..."))
+
+                st.write("Recommended Text 2.")
+                st.write(recommended_text['text'].iloc[1] + str(" ... ..."))
+
+                st.write("Recommended Text 3.")
+                st.write(recommended_text['text'].iloc[2] + str(" ... ..."))
 
                 st.write('---')
                 st.write("## 추천 시스템")
@@ -346,8 +371,17 @@ def main():
                     recommended_keyword = laod_data_keyword_sim(recommended_keyword_index)
 
                     st.write("")
-                    st.write("<추천글 목록>")
-                    st.table(recommended_keyword)
+                    st.subheader("<추천글 목록>")
+                    st.write("")
+                    
+                    st.write("Recommended By Keyword 1.")
+                    st.write(recommended_keyword['text'].iloc[0] + str(" ... ..."))
+
+                    st.write("Recommended By Keyword 2.")
+                    st.write(recommended_keyword['text'].iloc[1] + str(" ... ..."))
+
+                    st.write("Recommended By Keyword 3.")
+                    st.write(recommended_keyword['text'].iloc[2] + str(" ... ..."))
 
                     answer = 0 # 맞춤/틀림 여부
                     mysql_main(document ,answer, label, tmp_y, select_category_joined) ## 결과 db 저장
