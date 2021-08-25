@@ -19,7 +19,7 @@ def load_data(y):
     
     
     s3 = boto3.client('s3')
-    obj = s3.get_object(Bucket="util-brunch-networking", Key="credential/gcp/brunch-networking-07958d4e3d41.json")
+    obj = s3.get_object(Bucket="util-brunch-networking", Key="credential/gcp/brunch-networking-303012-450e7e08a952.json")
     body = obj['Body'].read()
 
     credentials = service_account.Credentials.from_service_account_info(json.loads(body))
@@ -47,7 +47,12 @@ def get_s3(key):
     return data
 
 def laod_data_keyword_sim(top_n_sim):
-    credentials = service_account.Credentials.from_service_account_file(".credential/brunch-networking-07958d4e3d41.json")
+
+    s3 = boto3.client('s3')
+    obj = s3.get_object(Bucket="util-brunch-networking", Key="credential/gcp/brunch-networking-303012-450e7e08a952.json")
+    body = obj['Body'].read()
+
+    credentials = service_account.Credentials.from_service_account_info(json.loads(body))
     project_id = 'brunch-networking-303012'
     client = bigquery.Client(credentials = credentials, project=project_id)
     
@@ -250,6 +255,9 @@ def main():
         st.write("이순신은 웃음이 적고 행동이 단아했으며 좌절과 포기를 모른 채 자신의 사명에만 충실하여 전장에서 싸우기를 멈추지 않았다. 탐관오리들이 자신의 위신을 높이고자 높으신 분들과 뇌물을 주고 받는 동안 부정행위를 하지 않고 무관의 본분에 충실하였다. 하지만 이러한 원리원칙적인 성향과 굉장히 청렴한 성격 탓에 당시 상사들과 갈등이 많아 임진왜란 전에는 인사 이동이 자주 있어 여러 지역을 옮겨 다녔다. 이순신은 사람이 갈망하는 권위나 권력같은 원초적인 욕망에 휘둘리지 않고 오직 자신의 신념으로 매사에 임하는 사람이었다. 그는 전장에서 싸우다 죽던 순간까지 누구의 인정과 보상도 바라지 않고 오직 나라와 백성을 구하고자 헌신하였으며, 몇몇 전투는 너무나 비현실적인 공적을 세워 어떻게 이뤄낸건지 아직도 학설이 분분할 정도이다. 가령 명량 해전의 초반부에서 물살이 바뀌기 전까지 약 2시간가량을 이순신은 대장선 1척으로 일본 측 함선 133척과 정면으로 붙어 하나하나 박살내고 있었다. 분명히 조선 측과 일본 측의 풍부한 사료로 교차검증이 가능한 기록임에도 너무 믿어지지 않아서 사람들이 오히려 왜곡된 유사역사학자의 주장을 믿고 마는 것이다. 일개 병졸 하나하나의 공을 세세히 적어 장계를 올려 포상을 받게 했으며 자신의 공적을 부하들에게 돌리는 경우도 허다했다. 대표적으로 명량 대첩 때 자신의 공로를 안위에게 준 것이 있는데 그 덕에 안위는 초고속 승진을 하게 된다. 허나 마냥 너그럽게 대했냐고 했다면 이것도 아닌데 훈련을 게을리하는 병사들을 매우 엄히 다스렸으며 심지어 조선 수군이 제일 무서워하는 것은 왜군이 아닌 이순신이라는 평가도 존재한다. 고로 당근과 채찍을 정확히 다루어 부하들을 부린다고 할 수 있겠다.")
         st.write("출처 - 나무위키")
         st.write("-------------------------------------------------------")
+
+        st.write("Contact Me : bill7845@gmail.com")
+        st.write("Github : https://github.com/bill7845/brunch_networking_aws")
 
         
 
