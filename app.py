@@ -5,6 +5,7 @@ import boto3
 
 import pandas as pd
 import numpy as np
+import json 
 import pymysql
 import re
 import pickle
@@ -15,7 +16,13 @@ from sklearn.metrics.pairwise import cosine_similarity
 ## load csv
 @st.cache(allow_output_mutation=True)
 def load_data(y):
-    credentials = service_account.Credentials.from_service_account_file(".credential/brunch-networking-07958d4e3d41.json")
+    
+    
+    s3 = boto3.client('s3')
+    obj = s3.get_object(Bucket="util-brunch-networking", Key="credential/gcp/brunch-networking-07958d4e3d41.json")
+    body = obj['Body'].read()
+
+    credentials = service_account.Credentials.from_service_account_info(json.loads(body))
     project_id = 'brunch-networking-303012'
     client = bigquery.Client(credentials = credentials, project=project_id)
 
