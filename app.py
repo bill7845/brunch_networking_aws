@@ -180,9 +180,9 @@ def mysql_main(document, answer, pred_label, correction_label, keyword_select):
     data = (document, answer, pred_label, correction_label, keyword_select)
     
     conn = pymysql.connect(
-        user='brunch_networking', 
+        user='admin', 
         passwd='qwp5197705', 
-        host='localhost', 
+        host='brunch-networking-db.cko2dlqq4ux8.ap-northeast-2.rds.amazonaws.com', 
         db='brunch_networking', 
         charset='utf8'
     )
@@ -206,6 +206,7 @@ def mysql_main(document, answer, pred_label, correction_label, keyword_select):
     else :
         query = """
             CREATE TABLE log_basic(
+                pk int(10) NOT NULL AUTO_INCREMENT PRIMARY KEY,
                 text_input MEDIUMTEXT,
                 answer int,
                 pred_label varchar(50),
