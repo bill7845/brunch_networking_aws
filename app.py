@@ -1,4 +1,5 @@
 import streamlit as st
+import streamlit.components.v1 as components
 from google.cloud import bigquery
 from google.oauth2 import service_account
 import boto3
@@ -229,7 +230,7 @@ def mysql_main(document, answer, pred_label, correction_label, keyword_select):
 ## main ##
 def main():
     st.sidebar.title("Menu")
-    app_mode = st.sidebar.selectbox("",["Home", "App 실행"])
+    app_mode = st.sidebar.selectbox("",["Home", "App 실행", "Dashboard"])
     
     tfidf_train_vect = load_tfidf_train_vect()
     label_dict = {0:'육아_이야기', 1:'요리_레시피', 2:'건강_운동', 3:'멘탈관리_심리탐구',4:'문화_예술', 5:'인문학_철학', 6:'쉽게_읽는_역사',
@@ -443,6 +444,13 @@ def main():
 
                     answer = 0 # 맞춤/틀림 여부
                     mysql_main(document ,answer, label, tmp_y, select_category_joined) ## 결과 db 저장
+
+    elif app_mode == "Dashboard":
+        
+        st.title("< Brunch Networking Dashboard >")
+        st.write("")
+
+        components.iframe("http://54.180.128.159/public/dashboards/wgjBU0877V9ukEzZR1QR30z0osHZn2nYkRhQXH8o?org_slug=default",width=680, height=880)
 
 
 if __name__ == "__main__":

@@ -20,9 +20,9 @@
 
 <br>
 
-프로젝트 아키텍처입니다. AWS EC2를 활용해 Streamlit 어플리케이션을 배포하였습니다. 수집 된 데이터는 GCP의 Bigquery를 통해 저장하였으며 모델, json, pickle등의 File 산출물은 S3를 통해 저장하고 로딩하였습니다. 어플리케이션을 실행함에 따라 생성되는 User Activity 데이터는 AWS의 RDS를 통해 저장,관리하였습니다.
+프로젝트 아키텍처입니다. AWS EC2를 활용해 Streamlit 어플리케이션을 배포하였습니다. 수집 된 데이터는 GCP의 Bigquery를 통해 저장하였으며 모델, json, pickle등의 File 산출물은 S3를 통해 저장하고 로딩하였습니다. 어플리케이션을 실행함에 따라 생성되는 User Activity 데이터는 AWS의 RDS를 통해 저장,관리하였습니다. 마지막으로, 저장 된 User Activity 데이터를 간단한 Redash 대시보드로 구현하였습니다.
 
-![프로젝트 아키텍처](https://user-images.githubusercontent.com/35517797/130816535-3914eae9-fd52-423e-94b3-d9799b7251aa.png)
+![Architecture](https://user-images.githubusercontent.com/35517797/131367317-28748f33-5a95-4ecf-8897-c1b28fd758bc.png)
 
 <br>
 
